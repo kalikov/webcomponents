@@ -154,16 +154,16 @@ class DomUtils {
         node.clientHeight;
     }
 
-    public static focus(element: HTMLElement) {
+    public static focus(element: HTMLElement, options?: FocusOptions) {
         if (DomUtils.isFocusable(element)) {
-            element.focus();
+            element.focus(options);
             return;
         }
         const focusable = DomUtils.queryShadowRoot(element, it => DomUtils.isFocusable(it) ? true : null);
         if (focusable) {
-            focusable.focus();
+            focusable.focus(options);
         } else {
-            element.focus();
+            element.focus(options);
         }
     }
 

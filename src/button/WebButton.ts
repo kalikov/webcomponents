@@ -17,7 +17,7 @@ export default class WebButton extends WebControl implements ConnectionAware, At
     }
 
     static get observedAttributes() {
-        return ['disabled', 'skeleton', 'type'];
+        return ['disabled', 'type'];
     }
 
     public set disabled(value: boolean) {
@@ -26,14 +26,6 @@ export default class WebButton extends WebControl implements ConnectionAware, At
 
     public get disabled(): boolean {
         return this.hasAttribute('disabled');
-    }
-
-    public set skeleton(value: boolean) {
-        this.toggleAttribute('skeleton', value);
-    }
-
-    public get skeleton(): boolean {
-        return this.hasAttribute('skeleton');
     }
 
     public set type(value: string) {
@@ -46,22 +38,21 @@ export default class WebButton extends WebControl implements ConnectionAware, At
 
     public connectedCallback(): void {
         this._slot.addEventListener('click', Functions.bindOnce(this.onSlotClick, this));
+        this.addEventListener('click', Functions.bindOnce(this.onClick, this));
 
         this.updateType(this.getAttribute('type'));
-        this.updateDisabled(this.getAttribute('disabled'), this.hasAttribute('skeleton'));
+        this.updateDisabled(this.getAttribute('disabled'));
     }
 
     public disconnectedCallback(): void {
+        this.removeEventListener('click', Functions.bindOnce(this.onClick, this));
         this._slot.removeEventListener('click', Functions.bindOnce(this.onSlotClick, this));
     }
 
     public attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
         switch (name) {
             case 'disabled':
-                this.updateDisabled(newValue, this.hasAttribute('skeleton'));
-                break;
-            case 'skeleton':
-                this.updateDisabled(this.getAttribute('disabled'), newValue != null);
+                this.updateDisabled(newValue);
                 break;
             case 'type':
                 this.updateType(newValue);
@@ -72,8 +63,8 @@ export default class WebButton extends WebControl implements ConnectionAware, At
         this._button.type = type || 'button';
     }
 
-    private updateDisabled(disabled: string | null, skeleton: boolean): void {
-        if (disabled != null || skeleton) {
+    private updateDisabled(disabled: string | null): void {
+        if (disabled != null) {
             this._button.setAttribute('disabled', disabled || '');
         } else {
             this._button.removeAttribute('disabled');
@@ -81,9 +72,26 @@ export default class WebButton extends WebControl implements ConnectionAware, At
     }
 
     private onSlotClick(e: Event) {
-        if (DomUtils.isDisabled(this._button) || this.classList.contains('skeleton')) {
+        if (DomUtils.isDisabled(this._button)) {
             e.stopPropagation();
             e.preventDefault();
+        }
+    }
+
+    private onClick(e: Event) {
+        if (!DomUtils.isDisabled(this._button) && this.hasAttribute('data-action')) {
+            const action = this.getAttribute('data-action');
+            if (action) {
+                const event = new CustomEvent('web:action', {
+                    detail: {type: action},
+                    cancelable: true,
+                    bubbles: true
+                });
+                if (!this.dispatchEvent(event)) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                }
+            }
         }
     }
 

@@ -1,4 +1,5 @@
 import Template from "Template";
+import DomUtils from "./DomUtils";
 
 export default abstract class WebControl extends HTMLElement {
     protected readonly _root: ShadowRoot;
@@ -15,12 +16,16 @@ export default abstract class WebControl extends HTMLElement {
         this._root.appendChild(template.create());
     }
 
+    public focus(options?: FocusOptions): void {
+        DomUtils.focus(this, options);
+    }
+
     protected static resolveStyle(name: string): string | undefined {
-        if (!__webcomponents_style__) {
+        if (!self.__webcomponents_style__) {
             console.warn(`WebComponents style is not imported while resolving "${name}"`)
             return undefined;
         }
-        return __webcomponents_style__.resolve(name)
+        return self.__webcomponents_style__.resolve(name)
     }
 
     // protected subscribe(state: State, callback: () => void): PageSubscription {
